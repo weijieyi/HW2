@@ -38,14 +38,8 @@ library(car)
 
 ```
 
-2. What is the mean and standard deviation of each quantitative predictor?  Provide in a nicely formatted table.
 
-```{r}
-
-```
-
-
-3. Investigate the predictors graphically, using scatterplots or other tools of your choice. Create some plots
+2. Investigate the predictors graphically, using scatterplots or other tools of your choice. Create some plots
 highlighting the relationships among the predictors. Comment
 on your findings regarding trying to predict `ModernC` from the other variables.  Are there potential outliers, nonlinear relationships or transformations that appear to be needed based on your graphical EDA?
 
@@ -55,40 +49,40 @@ on your findings regarding trying to predict `ModernC` from the other variables.
 
 ## Model Fitting
 
-4.  Use the `lm()` function to perform a multiple linear regression with `ModernC` as the response and all other variables as the predictors, using the formula `ModernC ~ .`, where the `.` includes all remaining variables in the dataframe.  Create  diagnostic residual plot from the linear model object and comment on results regarding assumptions.  How many observations are used in your model fitting?
+3.  Use the `lm()` function to perform a multiple linear regression with `ModernC` as the response and all other variables as the predictors, using the formula `ModernC ~ .`, where the `.` includes all remaining variables in the dataframe.  Create  diagnostic residual plot from the linear model object and comment on results regarding assumptions.  How many observations are used in your model fitting?
 
 ```{r}
 
 ```
 
-5. Examine added variable plots `car::avPlot` or `car::avPlots`  for your model above. Are there any plots that suggest that transformations are needed for any of the terms in the model? Describe. Is it likely that any of the localities are influential for any of the terms?  Which localities?  Which terms?  
+4. Examine added variable plots `car::avPlot` or `car::avPlots`  for your model above. Are there any plots that suggest that transformations are needed for any of the terms in the model? Describe. Is it likely that any of the localities are influential for any of the terms?  Which localities?  Which terms?  
 
 ```{r}
 
 ```
 
-6.  Using the multivariate BoxCox `car::powerTransform` or  Box-Tidwell  `car::boxTidwell` find appropriate transformations of the predictor variables  to be used as predictors in the linear model.  If any predictors are negative, you may need to transform so that they are non-negative.  Describe your method and  the resulting transformations.
-
-
-```{r}
-
-```
-
-7. Given the selected transformations of the predictors, select a transformation of the response using `MASS::boxcox` or `car::boxCox` and justify.  Do you need to do this if you used `car::powerTransform` above?  Explain.
+5.  Using the multivariate BoxCox `car::powerTransform`  find appropriate transformations of the response and predictor variables  for  the linear model.  If any predictors are negative, you may need to transform so that they are non-negative.  Summarize the resulting transformations.
 
 
 ```{r}
 
 ```
 
-8.  Fit the regression using the transformed variables.  Provide residual plots and added variables plots and comment.  If you feel that you need additional transformations of either the response or predictors, repeat any steps until you feel satisfied.
+6. Given the selected transformations of the predictors, verify the transformation of the response using `MASS::boxcox` or `car::boxCox` and justify.  Do you get the same transformation if you used `car::powerTransform` above? Do you get the same transformation for the response if you do not transform any of the predictors?  Discuss briefly the findings.
+
+
+```{r}
+
+```
+
+7.  Fit the regression using the transformed variables.  Provide residual plots and added variables plots and comment.  If you feel that you need additional transformations of either the response or predictors, repeat any steps until you feel satisfied with the model and residuals.
 
 ```{r}
 
 ```
 
 
-9.  Are there any outliers or influential points in the data?  Explain.  If so, refit the model after removing any outliers/influential points and comment on residual plots.
+8.  Are there any outliers or influential points in the data?  Explain.  If so, refit the model after removing any outliers/influential points and comment on residual plots.
 
 
 ```{r}
@@ -97,7 +91,7 @@ on your findings regarding trying to predict `ModernC` from the other variables.
 
 ## Summary of Results
 
-10. For your final model, provide summaries of coefficients with 95% confidence intervals in a nice table with interpretations of each coefficient.  These should be in terms of the original units! 
+9. For your final model, provide summaries of coefficients with 95% confidence intervals in a nice table with interpretations of each coefficient.  These should be in terms of the original units! 
 
 
 ```{r}
@@ -105,7 +99,7 @@ on your findings regarding trying to predict `ModernC` from the other variables.
 ```
 
 
-11. Provide a paragraph summarizing your final model  and findings suitable for the US envoy to the UN after adjusting for outliers or influential points.   You should provide a justification for any case deletions in your final model.
+10. Provide a paragraph summarizing your final model  and findings suitable for the US envoy to the UN after adjusting for outliers or influential points.   You should provide a justification for any case deletions in your final model.
 
 
 ```{r}
@@ -116,9 +110,8 @@ on your findings regarding trying to predict `ModernC` from the other variables.
 ## Methodology
 
     
-12. Prove that the intercept in the added variable scatter plot will always be zero.  _Hint:  use the fact that if $H$ is the projection matrix for $X$ which contains a column of ones, then $1_n^T (I - H) = 0$ or $(I - H) 1_n = 0$.  Use this to show that the sample mean of residuals will always be zero if there is an intercept._
 
-12. Exercise 9.12 from ALR
+11. Exercise 9.12 from ALR
 
 Using  $X^TX = X^T_{(i)}X_{(i)} + x_i x_i^T$ where the subscript $(i)$ means without the ith case, show that 
 
@@ -128,6 +121,7 @@ $$
 
 where $h_{ii}$ is the $i$th diagonal element of $H = X(X^TX)^{-1}X^T$ using direct multiplication and simplify in terms of_ $h_{ii}$.
 
-13. Exercise 9.13 from ALR.   Using the above, show
+12. Exercise 9.13 from ALR.   Using the above, show
 
 $$\hat{\beta}_{(i)} = \hat{\beta} -  \frac{(X^TX)^{-1}x_i e_i}{1 - h_{ii}}$$
+13. (optional)  Prove that the intercept in the added variable scatter plot will always be zero.  _Hint:  use the fact that if $H$ is the projection matrix for $X$ which contains a column of ones, then $1_n^T (I - H) = 0$ or $(I - H) 1_n = 0$.  Use this to show that the sample mean of residuals will always be zero if there is an intercept._
