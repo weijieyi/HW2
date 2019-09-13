@@ -1,7 +1,7 @@
 ---
 title: "HW2 STA521"
-author: '[Your Name Here, netid and github username here]'
-date: "Due September 12, 2019 10am"
+author: '[Weijie Yi, wy65]'
+date: "Due September 14, 2019 10am"
 output:
   pdf_document: default
   html_document:
@@ -34,60 +34,121 @@ library(car)
 
 1. Create a summary of the data.  How many variables have missing data?  Which are quantitative and which are qualtitative?
 
+Answer: Six variables have missing data, and all variables are quantitative. 
+
 ```{r}
-
+summary(UN3)
 ```
-
 
 2. Investigate the predictors graphically, using scatterplots or other tools of your choice. Create some plots
 highlighting the relationships among the predictors. Comment
 on your findings regarding trying to predict `ModernC` from the other variables.  Are there potential outliers, nonlinear relationships or transformations that appear to be needed based on your graphical EDA?
 
-```{r}
-
+Answer: Based on the scatterplots matrix, the predictors other than `Pop` are related to ModernC.The predictor `Pop` may need to transform. 
+There are some outliers, especially in predictor `Pop`. There seems to be a nonlinear relationship between the predictors `PPgdp`, `Frate` and `ModernC`.
+```{r fig.align='center', fig.height=8, fig.width=10}
+car::scatterplotMatrix(UN3, col = 1, regLine = list(method=lm, col = 2))
+title(main = 'The Scatterplots Matrix')
 ```
 
 ## Model Fitting
 
 3.  Use the `lm()` function to perform a multiple linear regression with `ModernC` as the response and all other variables as the predictors, using the formula `ModernC ~ .`, where the `.` includes all remaining variables in the dataframe.  Create  diagnostic residual plot from the linear model object and comment on results regarding assumptions.  How many observations are used in your model fitting?
 
+Answer: Based on the diagnostic residual plot, all assumptions of the linear model are satisfied. 
+125 observations are used in my model fitting.
+```{r fig.height=6}
+fit0 = lm(ModernC ~ ., UN3)
+par(mfrow = c(2, 2))
+plot(fit0)
+```
 ```{r}
-
+nobs(fit0)
 ```
 
 4. Examine added variable plots `car::avPlot` or `car::avPlots`  for your model above. Are there any plots that suggest that transformations are needed for any of the terms in the model? Describe. Is it likely that any of the localities are influential for any of the terms?  Which localities?  Which terms?  
 
-```{r}
+Answer:
+The added variable plots suggest that a transformations are needed for predictor `Pop` in the model. 
+The localities `Cook.Islands` and `Kuwait` are influential for predictor `Change`.
+The localities `Switzerlando` and `Norway` are influential for predictor `GGgdp`.
+The localities `Yemen` and `Burundio` are influential for predictor `Frate`.
+The localities `China` and `India` are influential for predictor `Pop`.
+The localities `Thailand` and `Nigero` are influential for predictor `Fertility`.
+The localities `Thailand` and `SriLanka` are influential for predictor `Purban`.
 
+```{r fig.align='center', fig.height=6}
+car::avPlots(fit0)
 ```
 
 5.  Using the multivariate BoxCox `car::powerTransform`  find appropriate transformations of the response and predictor variables  for  the linear model.  If any predictors are negative, you may need to transform so that they are non-negative.  Summarize the resulting transformations.
 
-
-```{r}
-
+Answer: According to the table below, we can see that Pop, Fertility and PPgdp need to be transformed. We can use log transformation for Pop and Fertility because their lambda is 0, and use power transformation for PPgdp because its lambda is negative.  
+```{r warning=FALSE, message=FALSE}
+pt = car::powerTransform(UN3, family='bcnPower')$roundlam
+names(pt) = names(UN3)
+knitr::kable(t(round(pt, 2)))
 ```
 
 6. Given the selected transformations of the predictors, verify the transformation of the response using `MASS::boxcox` or `car::boxCox` and justify.  Do you get the same transformation if you used `car::powerTransform` above? Do you get the same transformation for the response if you do not transform any of the predictors?  Discuss briefly the findings.
 
-
-```{r}
+Answer: Given the selected transformations of the predictors, the two transformations for the response are roughly the same.
+```{r message=FALSE, warning=FALSE}
+fit1 = lm(ModernC ~ Change + I(PPgdp^-0.14) + Frate + log(Pop) + log(Fertility) + Purban, UN3)
+bc1 = car::boxCox(fit1, grid = TRUE)
+lam1 = c(boxcox=bc1$x[which.max(bc1$y)],
+         powerTransform=car::powerTransform(fit1)$lambda[[1]])
+knitr::kable(t(round(lam1, 4)))
 
 ```
+
+
+```{r, message=FALSE, warning=FALSE}
+bc0 = car::boxCox(fit0, grid = TRUE)
+lam0 = c(boxcox=bc0$x[which.max(bc0$y)],
+         powerTransform=car::powerTransform(fit0)$lambda[[1]])
+knitr::kable(t(round(lam0, 4)))
+```
+
+Answer: If we do not transform the predictors, the two transformations (boxcox and powerTransform) for the response are also roughly the same.
 
 7.  Fit the regression using the transformed variables.  Provide residual plots and added variables plots and comment.  If you feel that you need additional transformations of either the response or predictors, repeat any steps until you feel satisfied with the model and residuals.
 
+Answer: Based on the diagnostic residual plot, all assumptions of the linear model are satisfied.
 ```{r}
-
+fit = lm(ModernC^0.9 ~ Change + I(PPgdp^-0.14) + Frate + log(Pop) + log(Fertility) + Purban, UN3)
+par(mfrow = c(2, 2))
+plot(fit)
 ```
+
+```{r fig.align='center', fig.height=6}
+car::avPlots(fit)
+```
+Answer: According to the results above, It seems to all predictors are satisfied.
 
 
 8.  Are there any outliers or influential points in the data?  Explain.  If so, refit the model after removing any outliers/influential points and comment on residual plots.
 
-
-```{r}
-
+Answer: Based on the plot, there are some outliers/influential points (The points which over the dotted line I set).
+```{r fig.align='center', fig.width=8, fig.height=5}
+par(mfrow = c(1, 2))
+plot(hatvalues(fit), type = 'h', xlab = 'Obs.')
+abline(h = 2*mean(hatvalues(fit)), lty = 2)
+plot(cooks.distance(fit), type = 'h', xlab = 'Obs.')
+abline(h = 4/nobs(fit), lty = 2)
 ```
+
+```{r fig.align='center', fig.height=5.2}
+ind = which(hatvalues(fit) > 2*mean(hatvalues(fit)))
+ind = c(ind, which(cooks.distance(fit) > 4/nobs(fit)))
+dat = UN3[-ind, ]
+reg = lm(ModernC^0.9 ~ Change + I(PPgdp^-0.14) + Frate +
+           log(Pop) + log(Fertility) + Purban, dat)
+par(mfrow = c(2, 2))
+plot(reg)
+```
+Answer: I removed the outliers/influential points and All assumptions of the linear model are satisfied.
+
 
 ## Summary of Results
 
@@ -95,16 +156,42 @@ on your findings regarding trying to predict `ModernC` from the other variables.
 
 
 ```{r}
-
+knitr::kable(round(cbind(summary(reg)$coef, confint(reg)), 3))
 ```
+Answer:
+The coefficient $\beta_{\text{Change}} = 1.658$, means the $\text{ModernC}^{0.9}$ is expected to increase by 1.658% for 1% increase of `Change`.  
+
+The coefficient $\beta_{\text{PPgdp}^{-0.14}} = -95.093$, means the $\text{ModernC}^{0.9}$ is expected to decrease by 95.093% for 1% increase of $\text{PPgdp}^{-0.14}$. 
+
+The coefficient $\beta_{\text{Frate}} = 0.128$, means the $\text{ModernC}^{0.9}$ is expected to increase by 0.128% for 1% increase of `Frate`. 
+
+The coefficient $\beta_{\log(\text{Pop})} = 1.019$, means the $\text{ModernC}^{0.9}$ is expected to increase by 1.019% for 1% increase of $\log(\text{Pop}$.
+
+The coefficient $\beta_{\log(\text{Fertility})} = -11.434$, means the $\text{ModernC}^{0.9}$ is expected to decrease by 11.443% for 1% increase of $\log(\text{Fertility}$.
+
+The coefficient $\beta_{\text{Purban}} = -0.032$, means the $\text{ModernC}^{0.9}$ is expected to decrease by 0.032% for 1% increase of `Purban`.
 
 
 10. Provide a paragraph summarizing your final model  and findings suitable for the US envoy to the UN after adjusting for outliers or influential points.   You should provide a justification for any case deletions in your final model.
 
 
 ```{r}
-
+summary(reg)
 ```
+
+The final model is
+$$
+\begin{aligned}
+\text{ModernC}^{0.9}
+&= 57.088 + 1.658\text{Change} - 95.093\text{PPgdp}^{-0.14} + 0.128\text{Frate} \\
+&\quad + 1.019\log(\text{Pop}) - 11.434\log(\text{Fertility}) - 0.032\text{Purban}
+\end{aligned}
+$$
+Answer: 
+
+We remove some outliers/influential points in order to fit the final model.
+
+In this model, all assumptions are satisfied. And the model can explain 54.4% of the variability of $\text{ModernC}^{0.9}$, but the predictors `Change` and `Purban` are not significant at 5% level of significance (Because their p value greater than 0.05, and also their confidence interval includes 0).
 
 
 ## Methodology
@@ -116,12 +203,72 @@ on your findings regarding trying to predict `ModernC` from the other variables.
 Using  $X^TX = X^T_{(i)}X_{(i)} + x_i x_i^T$ where the subscript $(i)$ means without the ith case, show that 
 
 $$
-( X^T_{(i)}X_{(i)})^{-1} = (X^TX)^{-1} + \frac{(X^TX)^{-1}x_ix_i^T  (X^TX)^{-1}}{1 - h_{ii}}
+(X^T_{(i)}X_{(i)})^{-1} = (X^TX)^{-1} + \frac{(X^TX)^{-1}x_ix_i^T  (X^TX)^{-1}}{1 - h_{ii}}
+$$
+where $h_{ii}$ is the $i$th diagonal element of $H = X(X^TX)^{-1}X^T$ using direct multiplication and simplify in terms of_ $h_{ii}$.
+
+$$
+h_{ii} = x_i^T(X^TX)^{-1}x_i
 $$
 
-where $h_{ii}$ is the $i$th diagonal element of $H = X(X^TX)^{-1}X^T$ using direct multiplication and simplify in terms of_ $h_{ii}$.
+$$
+\begin{aligned}
+&\Rightarrow
+\left(X^T_{(i)}X_{(i)}\right)
+\left((X^TX)^{-1} + \frac{(X^TX)^{-1}x_ix_i^T(X^TX)^{-1}}{1 - h_{ii}}\right) \\
+&= \left(X^TX - x_i x_i^T\right)
+\left((X^TX)^{-1} + \frac{(X^TX)^{-1}x_ix_i^T(X^TX)^{-1}}{1 - h_{ii}}\right) \\
+&= I + \frac{x_ix_i^T(X^TX)^{-1}}{1 - h_{ii}}
+- x_ix_i^T(X^TX)^{-1} - \frac{x_ix_i^T(X^TX)^{-1}x_ix_i^T(X^TX)^{-1}}{1 - h_{ii}} \\
+&= I + \frac{x_ix_i^T(X^TX)^{-1}}{1 - h_{ii}} 
+- x_ix_i^T(X^TX)^{-1} - \frac{x_ih_{ii}x_i^T(X^TX)^{-1}}{1 - h_{ii}} \\
+&= I + \frac{1 - (1-h_{ii}) - h_{ii}}{1 - h_{ii}}x_ix_i^T(X^TX)^{-1} \\
+&= I
+\end{aligned}
+$$
+$$
+\Rightarrow 
+(X^T_{(i)}X_{(i)})^{-1} = (X^TX)^{-1} + \frac{(X^TX)^{-1}x_ix_i^T  (X^TX)^{-1}}{1 - h_{ii}}
+$$
 
 12. Exercise 9.13 from ALR.   Using the above, show
 
 $$\hat{\beta}_{(i)} = \hat{\beta} -  \frac{(X^TX)^{-1}x_i e_i}{1 - h_{ii}}$$
-13. (optional)  Prove that the intercept in the added variable scatter plot will always be zero.  _Hint:  use the fact that if $H$ is the projection matrix for $X$ which contains a column of ones, then $1_n^T (I - H) = 0$ or $(I - H) 1_n = 0$.  Use this to show that the sample mean of residuals will always be zero if there is an intercept._
+$$
+\begin{aligned}
+\hat\beta_{(i)} 
+&= (X^T_{(i)}X_{(i)})^{-1}X^T_{(i)}Y_{(i)} \\
+&= \left((X^TX)^{-1} + \frac{(X^TX)^{-1}x_ix_i^T(X^TX)^{-1}}{1 - h_{ii}}\right)
+\left(X^TY - x_iy_i\right) \\
+&= \hat\beta - (X^TX)^{-1}x_iy_i 
++ \frac{(X^TX)^{-1}x_ix_i^T\hat\beta}{1 - h_{ii}} 
+- \frac{(X^TX)^{-1}x_ih_{ii}y_i}{1 - h_{ii}} \\
+& = \hat\beta - \frac{(X^TX)^{-1}x_iy_i}{1 - h_{ii}}
++ \frac{(X^TX)^{-1}x_i\hat{y}_i}{1 - h_{ii}} \\
+&= \hat\beta - \frac{(X^TX)^{-1}x_i(y_i-\hat{y}_i)}{1 - h_{ii}} \\
+&= \hat\beta - \frac{(X^TX)^{-1}x_ie_i}{1 - h_{ii}}
+\end{aligned}
+$$
+
+
+13. (optional)  Prove that the intercept i  n the added variable scatter plot will always be zero.  _Hint:  use the fact that if $H$ is the projection matrix for $X$ which contains a column of ones, then $1_n^T (I - H) = 0$ or $(I - H) 1_n = 0$.  Use this to show that the sample mean of residuals will always be zero if there is an intercept._
+
+If $X$ has the intercept term, then
+$$
+1_n^T (I - H) = 0
+$$
+$$
+\begin{aligned}
+\Rightarrow 1_n^Te 
+&= 1_n^T(Y - \hat{Y}) \\
+&= 1_n^T(Y - HY) \\
+&= 1_n^T(I - H)Y \\
+&= 0Y \\
+&= 0
+\end{aligned}
+$$
+$$
+\Rightarrow \frac{1}{n}1_n^Te = \frac{1}{n}\sum_{i=1}^ne_i = 0
+$$
+
+
