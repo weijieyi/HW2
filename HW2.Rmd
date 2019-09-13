@@ -83,9 +83,9 @@ car::avPlots(fit0)
 
 5.  Using the multivariate BoxCox `car::powerTransform`  find appropriate transformations of the response and predictor variables  for  the linear model.  If any predictors are negative, you may need to transform so that they are non-negative.  Summarize the resulting transformations.
 
-Answer: According to the table below, we can see that Pop, Fertility and PPgdp need to be transformed. We can use log transformation for Pop and Fertility because their lambda is 0, and use power transformation for PPgdp because its lambda is negative.  
+Answer: According to the table below, we can see that Pop, Fertility and PPgdp need to be transformed. We can use log transformation for them. 
 ```{r warning=FALSE, message=FALSE}
-pt = car::powerTransform(UN3, family='bcnPower')$roundlam
+pt = car::powerTransform(UN3, family='bcnPower')$lambda
 names(pt) = names(UN3)
 knitr::kable(t(round(pt, 2)))
 ```
@@ -94,7 +94,7 @@ knitr::kable(t(round(pt, 2)))
 
 Answer: Given the selected transformations of the predictors, the two transformations for the response are roughly the same.
 ```{r message=FALSE, warning=FALSE}
-fit1 = lm(ModernC ~ Change + I(PPgdp^-0.14) + Frate + log(Pop) + log(Fertility) + Purban, UN3)
+fit1 = lm(ModernC ~ Change + log(PPgdp) + Frate + log(Pop) + log(Fertility) + Purban, UN3)
 bc1 = car::boxCox(fit1, grid = TRUE)
 lam1 = c(boxcox=bc1$x[which.max(bc1$y)],
          powerTransform=car::powerTransform(fit1)$lambda[[1]])
@@ -115,8 +115,8 @@ Answer: If we do not transform the predictors, the two transformations (boxcox a
 7.  Fit the regression using the transformed variables.  Provide residual plots and added variables plots and comment.  If you feel that you need additional transformations of either the response or predictors, repeat any steps until you feel satisfied with the model and residuals.
 
 Answer: Based on the diagnostic residual plot, all assumptions of the linear model are satisfied.
-```{r}
-fit = lm(ModernC^0.9 ~ Change + I(PPgdp^-0.14) + Frate + log(Pop) + log(Fertility) + Purban, UN3)
+```{r fig.align='center', fig.height=6}
+fit = lm(ModernC^0.91 ~ Change + log(PPgdp) + Frate + log(Pop) + log(Fertility) + Purban, UN3)
 par(mfrow = c(2, 2))
 plot(fit)
 ```
@@ -142,8 +142,7 @@ abline(h = 4/nobs(fit), lty = 2)
 ind = which(hatvalues(fit) > 2*mean(hatvalues(fit)))
 ind = c(ind, which(cooks.distance(fit) > 4/nobs(fit)))
 dat = UN3[-ind, ]
-reg = lm(ModernC^0.9 ~ Change + I(PPgdp^-0.14) + Frate +
-           log(Pop) + log(Fertility) + Purban, dat)
+reg = lm(ModernC^0.91 ~ Change + log(PPgdp) + Frate + log(Pop) + log(Fertility) + Purban, dat)
 par(mfrow = c(2, 2))
 plot(reg)
 ```
@@ -156,20 +155,21 @@ Answer: I removed the outliers/influential points and All assumptions of the lin
 
 
 ```{r}
-knitr::kable(round(cbind(summary(reg)$coef, confint(reg)), 3))
+#knitr::kable(round(cbind(summary(reg)$coef, confint(reg)), 3))
+round(cbind(summary(reg)$coef, confint(reg)), 3)
 ```
 Answer:
-The coefficient $\beta_{\text{Change}} = 1.658$, means the $\text{ModernC}^{0.9}$ is expected to increase by 1.658% for 1% increase of `Change`.  
+The coefficient $\beta_{\text{Change}} = 1.595$, means the $\text{ModernC}^{0.91}$ is expected to increase by 1.595% for 1% increase of `Change`.  
 
-The coefficient $\beta_{\text{PPgdp}^{-0.14}} = -95.093$, means the $\text{ModernC}^{0.9}$ is expected to decrease by 95.093% for 1% increase of $\text{PPgdp}^{-0.14}$. 
+The coefficient $\beta_{\log(\text{PPgdp})} = 4.186$, means the $\text{ModernC}^{0.91}$ is expected to increase by 4.186% for 1% increase of $\log(\text{PPgdp})$. 
 
-The coefficient $\beta_{\text{Frate}} = 0.128$, means the $\text{ModernC}^{0.9}$ is expected to increase by 0.128% for 1% increase of `Frate`. 
+The coefficient $\beta_{\text{Frate}} = 0.112$, means the $\text{ModernC}^{0.91}$ is expected to increase by 0.112% for 1% increase of `Frate`. 
 
-The coefficient $\beta_{\log(\text{Pop})} = 1.019$, means the $\text{ModernC}^{0.9}$ is expected to increase by 1.019% for 1% increase of $\log(\text{Pop}$.
+The coefficient $\beta_{\log(\text{Pop})} = 0.951$, means the $\text{ModernC}^{0.91}$ is expected to increase by 0.951% for 1% increase of $\log(\text{Pop}$.
 
-The coefficient $\beta_{\log(\text{Fertility})} = -11.434$, means the $\text{ModernC}^{0.9}$ is expected to decrease by 11.443% for 1% increase of $\log(\text{Fertility}$.
+The coefficient $\beta_{\log(\text{Fertility})} = -12.666$, means the $\text{ModernC}^{0.9}$ is expected to decrease by 12.666% for 1% increase of $\log(\text{Fertility}$.
 
-The coefficient $\beta_{\text{Purban}} = -0.032$, means the $\text{ModernC}^{0.9}$ is expected to decrease by 0.032% for 1% increase of `Purban`.
+The coefficient $\beta_{\text{Purban}} = -0.012$, means the $\text{ModernC}^{0.9}$ is expected to decrease by 0.012% for 1% increase of `Purban`.
 
 
 10. Provide a paragraph summarizing your final model  and findings suitable for the US envoy to the UN after adjusting for outliers or influential points.   You should provide a justification for any case deletions in your final model.
@@ -179,19 +179,17 @@ The coefficient $\beta_{\text{Purban}} = -0.032$, means the $\text{ModernC}^{0.9
 summary(reg)
 ```
 
-The final model is
+The final model is:
 $$
 \begin{aligned}
-\text{ModernC}^{0.9}
-&= 57.088 + 1.658\text{Change} - 95.093\text{PPgdp}^{-0.14} + 0.128\text{Frate} \\
-&\quad + 1.019\log(\text{Pop}) - 11.434\log(\text{Fertility}) - 0.032\text{Purban}
+\text{ModernC}^{0.91}
+&= -5.622 + 1.595\text{Change} + 4.186\log(\text{PPgdp}) + 0.112\text{Frate} \\
+&\quad + 0.951\log(\text{Pop}) - 12.666\log(\text{Fertility}) - 0.012\text{Purban}
 \end{aligned}
 $$
-Answer: 
-
+Answer:
 We remove some outliers/influential points in order to fit the final model.
-
-In this model, all assumptions are satisfied. And the model can explain 54.4% of the variability of $\text{ModernC}^{0.9}$, but the predictors `Change` and `Purban` are not significant at 5% level of significance (Because their p value greater than 0.05, and also their confidence interval includes 0).
+In this model, all assumptions are satisfied. And the model can explain 52.92% of the variability of $\text{ModernC}^{0.91}$, but the predictors `Change` and `Purban` are not significant at 10% level of significance.
 
 
 ## Methodology
